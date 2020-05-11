@@ -1,2 +1,3 @@
-# Dynamics365Code
-This repository will have code related to Dynamics 365 and Power Platform
+Please follow the instruction given in my following article:
+
+https://arpitmscrmhunt.blogspot.com/2020/04/powerapps-portal-perform-crud-operation.html
