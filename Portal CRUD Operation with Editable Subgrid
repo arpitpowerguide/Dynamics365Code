@@ -1,0 +1,267 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/1.9.1/css/bootstrap.min.css">
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script>
+  $(document).ready(function(){
+    $(".data-table").find($("tr")).slice(1).remove();
+        $.ajax({
+        cache: false,
+        type: 'GET',
+        url: '~/leadpage/',
+        dataType: 'json',
+        success: function (data) {
+            $.each(data, function (key, value) 
+            { 
+              var i;  
+              for(i=0;i<value.length;i++){                
+                $(".data-table tbody").append("<tr data-name='"+value[i].subject+"' data-email='"+value[i].email+"' data-firstname='"+value[i].firstname+"' data-lastname='"+value[i].lastname+"' data-id='"+value[i].leadid+"'><td>"+value[i].subject+"</td><td>"+value[i].firstname+"</td><td>"+value[i].lastname+"</td><td>"+value[i].email+"</td><td style='display:none;'>"+value[i].leadid+"</td><td><button class='btn btn-info btn-xs btn-edit' style='margin:5px'>Edit</button><button class='btn btn-danger btn-xs btn-delete style='margin: 5px;''>Delete</button></td></tr>");
+              }
+            });               
+        }
+     });
+});
+ </script> 
+ <style>
+   table {
+  font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+table td, #customers th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+table tr:nth-child(even){background-color: #f2f2f2;}
+
+table tr:hover {background-color: #ddd;}
+
+table th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #4CAF50;
+  color: white;
+}
+#saveBTN {
+      display: inline-block;
+    border-radius: 4px;
+    background-color: #4CAF50;
+    border: none;
+    color: #FFFFFF;
+    text-align: center;
+    font-size: 16px;
+    padding: 8px;
+    width: 80px;
+    transition: all 0.5s;
+    cursor: pointer;
+    margin: 5px;
+}
+
+</style><h1>PowerApp Portal - CRUD Operation</h1>
+<div class="container">
+    <div class="form-group">
+      <label>Subject:</label>
+      <input type="text" name="name" class="form-control" value="Interested to learn PowerApps Portal" required="">
+    </div>
+    
+    <div class="form-group">
+      <label>First Name:</label>
+      <input type="text" name="firstname" class="form-control" value="Arpit" required="">
+    </div>
+    
+     <div class="form-group">
+      <label>Last Name:</label>
+      <input type="text" name="lastname" class="form-control" value="Shrivastava" required="">
+    </div>
+    
+    <div class="form-group">
+      <label>Email:</label>
+      <input type="text" name="email" class="form-control" value="arpit@gmail.com" required="">
+    </div> 
+
+    <button type="button" id="saveBTN">Save</button>
+
+</div>
+  <br> <br>
+  <table class="table table-bordered data-table">
+    <thead>
+      <tr><th>Subject</th>
+      <th>First Name</th>
+      <th>Last Name</th>
+      <th>Email</th>
+      <th style="display:none;">Id</th>
+      <th width="250px">Action <i id="refresh" style="font-size: 18px;float: right;cursor:pointer;" class="fa"></i></th>
+    </tr></thead>
+    <tbody>  
+    </tbody>
+  </table> 
+
+   
+<script type="text/javascript">
+   $("#saveBTN").click(function(){
+        var name = $("input[name='name']").val();
+        var firstname = $("input[name='firstname']").val();
+        var lastname = $("input[name='lastname']").val();
+        var email = $("input[name='email']").val();
+        var recordId = null;
+
+        //build JSON string using values from display
+        var leadRecord = '{ "lead" : ['+
+        '{ "Action":"Create", "RecordId":"null", "Subject": "' + name +'", "Firstname": "' + firstname +'", "Lastname": "' + lastname +'", "Email": "' + email +'"} ]}';
+
+        //build http request string using URL from Power Automate flow
+        var req = new XMLHttpRequest();
+        var url = "<Paste the HTTP Request URL got from Power Automate>";
+ 
+        //send https request to Power Automate
+        req.open("POST", url, true);
+        req.setRequestHeader('Content-Type', 'application/json');
+        req.send(leadRecord);
+
+        req.onreadystatechange = function() {
+        if(req.readyState == XMLHttpRequest.DONE) {
+
+        recordId = req.responseText;
+     
+        $(".data-table tbody").append("<tr data-name='"+name+"' data-email='"+email+"' data-firstname='"+firstname+"' data-lastname='"+lastname+"' data-id='"+recordId+"'><td>"+name+"</td><td>"+firstname+"</td><td>"+lastname+"</td><td>"+email+"</td><td style='display:none;'>"+recordId+"</td><td><button id='editBTN' type='button' class='btn btn-info btn-xs btn-edit' style='margin-5px'>Edit</button><button id='deleteBTN' type='button' class='btn btn-danger btn-xs btn-delete' style='margin: 5px;'>Delete</button></td></tr>");
+    
+        $("input[name='name']").val('');
+        $("input[name='email']").val('');
+        $("input[name='firstname']").val('');
+        $("input[name='lastname']").val('');
+
+        alert("Record has been created...");
+        }
+        }
+    });
+   
+    $("body").on("click", ".btn-delete", function(){
+
+      var recordId = $(this).parents("tr").attr('data-id');
+      
+      //build JSON string using values from display
+        var leadRecord = '{ "lead" : ['+
+        '{ "Action":"Delete","RecordId":"'+recordId+'", "Subject": "null", "Firstname": "null", "Lastname": "null", "Email": "null"} ]}';
+       
+        //build http request string using URL from Power Automate flow
+        var req = new XMLHttpRequest();
+        var url = "<Paste the HTTP Request URL got from Power Automate>";
+ 
+        //send https request to Power Automate
+        req.open("POST", url, true);
+        req.setRequestHeader('Content-Type', 'application/json');
+        req.send(leadRecord);
+        $(this).parents("tr").remove();
+ 
+        alert("Record has been Deleted");
+        
+    });
+    //$("#editBTN").click(function(){
+    $("body").on("click", ".btn-edit", function(){
+
+        var name = $(this).parents("tr").attr('data-name');
+        var firstname = $(this).parents("tr").attr('data-firstname');
+        var lastname = $(this).parents("tr").attr('data-lastname');
+        var email = $(this).parents("tr").attr('data-email');
+        var recordId = $(this).parents("tr").attr('data-id');
+    
+        $(this).parents("tr").find("td:eq(0)").html('<input name="edit_name" value="'+name+'">');      
+        $(this).parents("tr").find("td:eq(1)").html('<input name="edit_firstname" value="'+firstname+'">');
+        $(this).parents("tr").find("td:eq(2)").html('<input name="edit_lastname" value="'+lastname+'">');
+        $(this).parents("tr").find("td:eq(3)").html('<input name="edit_email" value="'+email+'">');  
+         $(this).parents("tr").find("td:eq(4)").html('<input name="edit_id" value="'+recordId+'">');
+     
+        $(this).parents("tr").find("td:eq(5)").prepend("<button class='btn btn-info btn-xs btn-update' style='margin:5px'>Update</button><button class='btn btn-warning btn-xs btn-cancel' style='margin:5px'>Cancel</button>")
+        $(this).hide();
+
+        return false;
+        
+    });
+   
+    $("body").on("click", ".btn-cancel", function(){
+        var name = $(this).parents("tr").attr('data-name');
+        var firstname = $(this).parents("tr").attr('data-firstname');
+        var lastname = $(this).parents("tr").attr('data-lastname');
+         var email = $(this).parents("tr").attr('data-email');
+        var recordId = $(this).parents("tr").attr('data-id');
+    
+        $(this).parents("tr").find("td:eq(0)").text(name);
+         $(this).parents("tr").find("td:eq(1)").text(firstname);
+          $(this).parents("tr").find("td:eq(2)").text(lastname);
+          $(this).parents("tr").find("td:eq(3)").text(email);
+          $(this).parents("tr").find("td:eq(4)").text(recordId);
+   
+        $(this).parents("tr").find(".btn-edit").show();
+        $(this).parents("tr").find(".btn-update").remove();
+        $(this).parents("tr").find(".btn-cancel").remove();
+
+        return false;
+    });
+   
+    $("body").on("click", ".btn-update", function(){
+
+        var name = $(this).parents("tr").find("input[name='edit_name']").val();        
+        var firstname = $(this).parents("tr").find("input[name='edit_firstname']").val();
+        var lastname = $(this).parents("tr").find("input[name='edit_lastname']").val();
+        var email = $(this).parents("tr").find("input[name='edit_email']").val();
+        var recordId = $(this).parents("tr").find("input[name='edit_id']").val();  
+    
+        $(this).parents("tr").find("td:eq(0)").text(name);       
+        $(this).parents("tr").find("td:eq(1)").text(firstname);
+        $(this).parents("tr").find("td:eq(2)").text(lastname);
+        $(this).parents("tr").find("td:eq(3)").text(email);
+        $(this).parents("tr").find("td:eq(4)").text(recordId);
+     
+        $(this).parents("tr").attr('data-name', name);
+        $(this).parents("tr").attr('data-firstname', firstname);
+        $(this).parents("tr").attr('data-lastname', lastname);
+        $(this).parents("tr").attr('data-email', email);
+        $(this).parents("tr").attr('data-id', recordId);
+    
+        $(this).parents("tr").find(".btn-edit").show();
+        $(this).parents("tr").find(".btn-cancel").remove();
+        $(this).parents("tr").find(".btn-update").remove();
+
+        //build JSON string using values from display
+        var leadRecord = '{ "lead" : ['+
+        '{ "Action":"Update","RecordId":"'+recordId+'", "Subject": "' + name +'", "Firstname": "' + firstname +'", "Lastname": "' + lastname +'", "Email": "' + email +'"} ]}';
+        alert(leadRecord);
+
+        //build http request string using URL from Power Automate flow
+        var req = new XMLHttpRequest();
+        var url = "<Paste the HTTP Request URL got from Power Automate>";
+ 
+        //send https request to Power Automate
+        req.open("POST", url, true);
+        req.setRequestHeader('Content-Type', 'application/json');
+        req.send(leadRecord);
+ 
+        alert("Record has been Updated...");
+    });
+
+    $("#refresh").click(function()
+    {
+        $(".data-table").find($("tr")).slice(1).remove();
+        $.ajax({
+        cache: false,
+        type: 'GET',
+        url: '~/leadpage/',
+        dataType: 'json',
+        success: function (data) {
+            $.each(data, function (key, value) 
+            { 
+              var i;  
+              for(i=0;i<value.length;i++){                
+                $(".data-table tbody").append("<tr data-name='"+value[i].subject+"' data-email='"+value[i].email+"' data-firstname='"+value[i].firstname+"' data-lastname='"+value[i].lastname+"' data-id='"+value[i].leadid+"'><td>"+value[i].subject+"</td><td>"+value[i].firstname+"</td><td>"+value[i].lastname+"</td><td>"+value[i].email+"</td><td style='display:none;'>"+value[i].leadid+"</td><td><button class='btn btn-info btn-xs btn-edit' style='margin:5px'>Edit</button><button class='btn btn-danger btn-xs btn-delete style='margin: 5px;'>Delete</button></td></tr>");
+              }
+            });               
+        }
+     });
+    return false;
+  });
+</script>
+     
+
