@@ -1,0 +1,82 @@
+using Newtonsoft.Json;
+using System;
+using System.Configuration;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+
+namespace CallMicrosoftGraphAPI
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("Generating Token");
+
+            CreateGuestUser();
+
+        }
+
+        public static string GenerateToken()
+        {
+            String clientID = ConfigurationManager.AppSettings["clientId"];
+
+            String clientSecretKey = ConfigurationManager.AppSettings["clientSecretKey"];
+
+            string tenantId = ConfigurationManager.AppSettings["tenantId"];
+
+            string audienceURL = ConfigurationManager.AppSettings["audienceURL"];
+
+            string TokenUrl = "https://login.microsoftonline.com/"+ tenantId + "/oauth2/v2.0/token";
+
+            string userName = ConfigurationManager.AppSettings["userName"];
+
+            string Password = ConfigurationManager.AppSettings["Password"];
+
+            var webClient = new WebClient();
+            webClient.Headers[HttpRequestHeader.CacheControl] = "no-cache";
+            webClient.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
+
+            string para = "grant_type=password&scope=" + audienceURL + "&client_id=" + clientID + "&client_secret=" + clientSecretKey + "&userName=" + userName + "&password=" + Password + "";
+
+            string response = webClient.UploadString(TokenUrl, "POST", para);
+            dynamic jsonObj = Newtonsoft.Json.JsonConvert.DeserializeObject(response);
+            string token = jsonObj.access_token;
+
+            Console.WriteLine("Token Generated Succesfully...");
+
+            return token;
+        }
+
+        public static void CreateGuestUser()
+        {
+            string json = File.ReadAllText(@"C:\Users\Arpit\Documents\Code\CallMicrosoftGraphAPI\CallMicrosoftGraphAPI\request.json");
+
+            string token = GenerateToken();
+           
+            HttpResponseMessage servicerequest = null;
+
+            using (HttpClient httpClient = new HttpClient())
+            {
+                httpClient.BaseAddress = new Uri("https://graph.microsoft.com/v1.0/invitations");
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                httpClient.DefaultRequestHeaders.Add("authorization", "Bearer " + token + "");
+
+                var content = new StringContent(json.ToString(), System.Text.Encoding.UTF8, "application/json");
+
+                servicerequest = httpClient.PostAsync("https://graph.microsoft.com/v1.0/invitations", content).Result;
+
+                string response = servicerequest.Content.ReadAsStringAsync().Result;
+
+                Console.WriteLine("User has been added as Guest User in Azure AD");
+
+                Console.ReadKey();
+               
+
+            }
+        }
+
+
+    }
+}
